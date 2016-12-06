@@ -4,11 +4,11 @@ import tensorflow as tf
 learning_rate = 0.01
 training_iters = 10000
 batch_size = 128
-display_step = 10
-word_vec_length = 50
+display_step = 100
+word_vec_length = 25
 
 # Network Parameters
-seq_max_len = # handling variable-length sequences, we need to pad sequences to fixed-length
+seq_max_len = 20# handling variable-length sequences, we need to pad sequences to fixed-length
 n_hidden = 64 # hidden layer number of features
 n_classes = 3 # good, potentially useful and bad
 
@@ -60,25 +60,28 @@ def RNN(x, seqlen_t, seqlen_q, weights, biases):
 
     return tf.sigmoid(dot_pro + biases)
 
-pred = RNN(x, seqlen_t, seqlen_q, biases)
+pred = RNN(x, seqlen_q + seqlen_a, seqlen_q, weights, biases)
 
 # Loss Function and Optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
 optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 
 # Evaluate Model
-correct_pred =    # how to evaluate???
-accuracy = 
+#correct_pred =    # how to evaluate???
+#accuracy = 
 
 # Initializing the variables
 init = tf.initialize_all_variables()
 
 # Launch
-with tf.Session() as sess:
+with tf.Graph().as_default():
+    sess = tf.Session()
     sess.run(init)
+    coord = tf.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
     step = 1
     while step * batch_size < training_iters:
-        batch_x, batch_seqlen_q, batch_seqlen_t, batch_y = # read in data
+        batch_x, batch_seqlen_q, batch_seqlen_t, batch_y = inputs([r'./train.tfrecords'])
         feed_dict = {x: batch_x,
                      y: batch_y,
                      seqlen_q: batch_seqlen_q,
@@ -94,6 +97,3 @@ with tf.Session() as sess:
         step += 1
     print('Finished!')
 
-# Test
-
-    

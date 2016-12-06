@@ -36,12 +36,12 @@ def read_and_decode(filename_queue):
   return x, y, seqlen_q, seqlen_t
 
 
-def inputs():
+def inputs(train_sets, num_epochs=1,):
     with tf.name_scope('input'):
-        filename_queue = tf.train.string_input_producer([TRAIN_FILE])
+        filename_queue = tf.train.string_input_producer([train_sets], num_epochs=num_epochs)
         _x, _y, _seqlen_q, _seqlen_t = read_and_decode(filename_queue)
         x, y, seqlen_q, seqlen_t = tf.train.shuffle_batch(
-            [_x, _y, _seqlen_q, _seqlen_t], batch_size=2,
+            [_x, _y, _seqlen_q, _seqlen_t], batch_size=1,
             num_threads=1,
             capacity=5,
             min_after_dequeue=3,
@@ -51,10 +51,18 @@ def inputs():
 if __name__ == '__main__':
     with tf.Graph().as_default(): 
         x, y, seqlen_q, seqlen_t = inputs()
+        init_op = tf.group(tf.global_variables_initializer(),
+                           tf.local_variables_initializer())
         sess = tf.Session()
+        sess.run(init_op)
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-        while not coord.should_stop():
-            print(r'-------------------------------------------------------------------')
-            print(sess.run([x, y, seqlen_q, seqlen_t]))
+        try:
+            while not coord.should_stop():
+                print(r'-------------------------------------------------------------------')
+                print(sess.run([x, y, seqlen_q, seqlen_t]))
+        except tf.errors.OutOfRangeError:
+            print('Exhaust!')
+        finally:
+            coord.request_stop()
 
