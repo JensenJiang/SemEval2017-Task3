@@ -1,4 +1,5 @@
 import tensorflow as tf
+from test_read_tfdata import inputs
 
 # Parameters
 learning_rate = 0.01
@@ -16,7 +17,7 @@ n_classes = 3 # good, potentially useful and bad
 x = tf.placeholder(tf.float32, [None, seq_max_len, word_vec_length])
 y = tf.placeholder(tf.float32, [None]) # ???
 seqlen_q = tf.placeholder(tf.int32, [None])
-seqlen_a = tf.placeholder(tf.int32, [None])
+seqlen_t = tf.placeholder(tf.int32, [None])
 
 # Weights
 weights = {
@@ -53,14 +54,11 @@ def RNN(x, seqlen_t, seqlen_q, weights, biases):
     outputs_q = tf.gather(outputs, index_q)
     outputs_a = tf.gather(outputs, index_a)
     temp1 = tf.matmul(outputs_q, weights['out'])
-    
-    list_a1 = tf.split(0, batch_size, temp1)
-    list_a2 = tf.split(0, batch_size, outputs_a)
-    dot_pro = tf.pack([tf.reduce_sum(tf.mul(list_a1[i] * list_a2[i])) for i in range(0, batch_size)])
+    temp2 = tf.multiply(temp1, outputs_a)
 
-    return tf.sigmoid(dot_pro + biases)
+    return tf.sigmoid(tf.reduce_sum(temp2, 1) + biases['out'])
 
-pred = RNN(x, seqlen_q + seqlen_a, seqlen_q, weights, biases)
+pred = RNN(x, seqlen_t, seqlen_q, weights, biases)
 
 # Loss Function and Optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
@@ -70,18 +68,16 @@ optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minim
 #correct_pred =    # how to evaluate???
 #accuracy = 
 
-# Initializing the variables
-init = tf.initialize_all_variables()
-
 # Launch
 with tf.Graph().as_default():
+    batch_x, batch_y, batch_seqlen_q, batch_seqlen_t = inputs([r'./train.tfrecords'])
+    init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
     sess = tf.Session()
-    sess.run(init)
-    coord = tf.Coordinator()
+    sess.run(init_op)
+    coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
     step = 1
     while step * batch_size < training_iters:
-        batch_x, batch_seqlen_q, batch_seqlen_t, batch_y = inputs([r'./train.tfrecords'])
         feed_dict = {x: batch_x,
                      y: batch_y,
                      seqlen_q: batch_seqlen_q,

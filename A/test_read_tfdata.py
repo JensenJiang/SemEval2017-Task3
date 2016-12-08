@@ -38,7 +38,7 @@ def read_and_decode(filename_queue):
 
 def inputs(train_sets, num_epochs=1,):
     with tf.name_scope('input'):
-        filename_queue = tf.train.string_input_producer([train_sets], num_epochs=num_epochs)
+        filename_queue = tf.train.string_input_producer(train_sets, num_epochs=num_epochs)
         _x, _y, _seqlen_q, _seqlen_t = read_and_decode(filename_queue)
         x, y, seqlen_q, seqlen_t = tf.train.shuffle_batch(
             [_x, _y, _seqlen_q, _seqlen_t], batch_size=1,
