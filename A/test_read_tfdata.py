@@ -26,10 +26,10 @@ def read_and_decode(filename_queue):
           'Question_length':tf.FixedLenFeature([1], tf.int64),
           'Total_length':tf.FixedLenFeature([1], tf.int64),
           'label':tf.FixedLenFeature([1], tf.int64),
-          'Question_Answer':tf.FixedLenFeature([500], tf.float32),
+          'Question_Answer':tf.FixedLenFeature([7500], tf.float32),
       })
   x = tf.cast(features['Question_Answer'], tf.float32)
-  x = tf.reshape(x, [20,25])
+  x = tf.reshape(x, [300,25])
   y = tf.cast(features['label'], tf.int64)
   seqlen_t = tf.cast(features['Total_length'], tf.int64)
   seqlen_q = tf.cast(features['Question_length'], tf.int64)
@@ -41,8 +41,8 @@ def inputs(train_sets, num_epochs=1,):
         filename_queue = tf.train.string_input_producer(train_sets, num_epochs=num_epochs)
         _x, _y, _seqlen_q, _seqlen_t = read_and_decode(filename_queue)
         x, y, seqlen_q, seqlen_t = tf.train.shuffle_batch(
-            [_x, _y, _seqlen_q, _seqlen_t], batch_size=1,
-            num_threads=1,
+            [_x, _y, _seqlen_q, _seqlen_t], batch_size=128,
+            num_threads=2,
             capacity=5,
             min_after_dequeue=3,
             allow_smaller_final_batch=True)

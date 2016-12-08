@@ -3,29 +3,16 @@ from test_read_tfdata import inputs
 
 # Parameters
 learning_rate = 0.01
-training_iters = 10000
+training_iters = 256
 batch_size = 128
 display_step = 100
 word_vec_length = 25
 
 # Network Parameters
-seq_max_len = 20# handling variable-length sequences, we need to pad sequences to fixed-length
+seq_max_len = 300# handling variable-length sequences, we need to pad sequences to fixed-length
 n_hidden = 64 # hidden layer number of features
 n_classes = 3 # good, potentially useful and bad
 
-# Graph Input
-x = tf.placeholder(tf.float32, [None, seq_max_len, word_vec_length])
-y = tf.placeholder(tf.float32, [None]) # ???
-seqlen_q = tf.placeholder(tf.int32, [None])
-seqlen_t = tf.placeholder(tf.int32, [None])
-
-# Weights
-weights = {
-    'out': tf.Variable(tf.random_normal([n_hidden, n_hidden]))
-}
-biases = {
-    'out': tf.Variable(tf.random_normal([]))
-}
 
 def RNN(x, seqlen_t, seqlen_q, weights, biases):
     """ The main function for LSTM
@@ -58,19 +45,34 @@ def RNN(x, seqlen_t, seqlen_q, weights, biases):
 
     return tf.sigmoid(tf.reduce_sum(temp2, 1) + biases['out'])
 
-pred = RNN(x, seqlen_t, seqlen_q, weights, biases)
-
-# Loss Function and Optimizer
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
-optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
-
 # Evaluate Model
 #correct_pred =    # how to evaluate???
 #accuracy = 
 
 # Launch
 with tf.Graph().as_default():
-    batch_x, batch_y, batch_seqlen_q, batch_seqlen_t = inputs([r'./train.tfrecords'])
+    # Graph Input
+    x = tf.placeholder(tf.float32, [None, seq_max_len, word_vec_length])
+    y = tf.placeholder(tf.float32, [None]) # ???
+    seqlen_q = tf.placeholder(tf.int32, [None])
+    seqlen_t = tf.placeholder(tf.int32, [None])
+
+    # Weights
+    weights = {
+       'out': tf.Variable(tf.random_normal([n_hidden, n_hidden]))
+    }
+    biases = {
+        'out': tf.Variable(tf.random_normal([]))
+    }
+
+    pred = RNN(x, seqlen_t, seqlen_q, weights, biases)
+
+    # Loss Function and Optimizer
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+
+    q_batch_x, q_batch_y, q_batch_seqlen_q, q_batch_seqlen_t = inputs([r'./train.tfrecords'])
+    print("Reading data finished")
     init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
     sess = tf.Session()
     sess.run(init_op)
@@ -78,6 +80,7 @@ with tf.Graph().as_default():
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
     step = 1
     while step * batch_size < training_iters:
+        batch_x, batch_y, batch_seqlen_q, batch_seqlen_t = sess.run([q_batch_x, q_batch_y, q_batch_seqlen_q, q_batch_seqlen_t])
         feed_dict = {x: batch_x,
                      y: batch_y,
                      seqlen_q: batch_seqlen_q,
