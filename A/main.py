@@ -27,7 +27,7 @@ def RNN(x, seqlen_t, seqlen_q, weights, biases):
     lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(n_hidden) # more parameters refer to the documentation
     outputs, states = tf.nn.rnn(lstm_cell, x,
                                 dtype=tf.float32,
-                                sequence_length=seqlen_t) 
+                                sequence_length=tf.reshape(seqlen_t,[-1])) 
     
     # Output Process
     outputs = tf.pack(outputs)
@@ -52,10 +52,12 @@ def RNN(x, seqlen_t, seqlen_q, weights, biases):
 # Launch
 with tf.Graph().as_default():
     # Graph Input
-    x = tf.placeholder(tf.float32, [None, seq_max_len, word_vec_length])
-    y = tf.placeholder(tf.float32, [None]) # ???
-    seqlen_q = tf.placeholder(tf.int32, [None])
-    seqlen_t = tf.placeholder(tf.int32, [None])
+    x = tf.placeholder(tf.float32, [None, seq_max_len, word_vec_length],'hrb_x')
+    y = tf.placeholder(tf.float32, [None,1],'hrb_y') # ???
+    #seqlen_q = tf.placeholder(tf.int32, [None,1],'hrb-seqlen-q')
+    seqlen_q = tf.placeholder(tf.int32)
+    #seqlen_t = tf.placeholder(tf.int32, [None,1],'hrb-seqlen-t')
+    seqlen_t = tf.placeholder(tf.int32)
 
     # Weights
     weights = {
