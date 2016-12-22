@@ -32,20 +32,21 @@ def RNN(x, seqlen_t, seqlen_q, weights, biases):
     # Output Process
     outputs = tf.pack(outputs)
     outputs = tf.transpose(outputs, [1, 0, 2]) # change back to (batch_size, seq_max_len, n_hidden)
-
     batch_size = tf.shape(outputs)[0]
     index_a = tf.range(0, batch_size) * seq_max_len + (seqlen_t - 1) # generate index for valid response outputs
     index_q = tf.range(0, batch_size) * seq_max_len + (seqlen_q - 1)
-
     outputs = tf.reshape(outputs, [-1, n_hidden]) # is the shape right?
     outputs_q = tf.gather(outputs, index_q)
     outputs_a = tf.gather(outputs, index_a)
     outputs_q = tf.reshape(outputs_q, [-1, n_hidden])
     outputs_a = tf.reshape(outputs_a, [-1, n_hidden])
     temp1 = tf.matmul(outputs_q, weights['out'])
+    temp1 = tf.Print(temp1, [tf.shape(temp1), tf.shape(seqlen_q), tf.shape(seqlen_t)])
     temp2 = tf.multiply(temp1, outputs_a)
+    # temp2_shape = tf.shape(temp2)
+    # temp2_shape = tf.Print(temp2_shape, [temp2_shape], message="Print shape: ")
     temp2 = tf.reshape(temp2, [-1, n_hidden])
-    return tf.sigmoid(tf.reduce_sum(temp2, 1) + biases['out'])
+    return tf.sigmoid(tf.add(tf.reduce_sum(temp2, 1, keep_dims=True), biases['out']))
 
 # Evaluate Model
 #correct_pred =    # how to evaluate???
@@ -72,7 +73,7 @@ with tf.Graph().as_default():
     pred = RNN(x, seqlen_t, seqlen_q, weights, biases)
 
     # Loss Function and Optimizer
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, tf.reshape(y, [-1])))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 
     q_batch_x, q_batch_y, q_batch_seqlen_q, q_batch_seqlen_t = inputs([r'./train.tfrecords'])
