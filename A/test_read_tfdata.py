@@ -23,8 +23,8 @@ def read_and_decode(filename_queue):
   features = tf.parse_single_example(
       serialized_example,
       features={
-          'Question_length':tf.FixedLenFeature([1], tf.int64),
-          'Total_length':tf.FixedLenFeature([1], tf.int64),
+          'Question_length':tf.FixedLenFeature([], tf.int64),
+          'Total_length':tf.FixedLenFeature([], tf.int64),
           'label':tf.FixedLenFeature([1], tf.int64),
           'Question_Answer':tf.FixedLenFeature([7500], tf.float32),
       })
@@ -50,7 +50,7 @@ def inputs(train_sets, num_epochs=1,):
         return x, y, seqlen_q, seqlen_t
 
 if __name__ == '__main__':
-    with tf.Graph().as_default(): 
+    with tf.Graph().as_default():
         x, y, seqlen_q, seqlen_t = inputs(['train.tfrecords'])
         init_op = tf.group(tf.global_variables_initializer(),
                            tf.local_variables_initializer())
@@ -67,4 +67,3 @@ if __name__ == '__main__':
             print('Exhaust!')
         finally:
             coord.request_stop()
-
