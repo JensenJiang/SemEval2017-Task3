@@ -52,11 +52,14 @@ def read_and_decode(filename_queue):
     x = tf.reshape(features['Question_Answer'], [args.seq_len, args.word_vec_length])
     return x, features['label'], features['Total_length'], features['Question_length']
 
+def biLSTM_AP(q, a, seqlen_q, seqlen_a, U):
+    
+    pass
 
 if __name__ == '__main__':
     train_sets = [os.path.join(args.dir, args.filename)]
-    print train_sets
     x, y, seqlen_t, seqlen_q = inputs(train_sets)
+    seqlen_a = tf.subtract(seqlent_t, seqlen_q)
     init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
     sess = tf.Session()
     sess.run(init_op)
